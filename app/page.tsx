@@ -1,6 +1,9 @@
 "use client";
+
+import Navbar from "@/components/Navbar";
+import { Coin } from "@/components/icons/Coin";
+
 import { useEffect, useRef, useState } from "react";
-import Navbar from "../components/Navbar";
 
 export default function Home() {
   const bet = 70;
@@ -44,8 +47,8 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       <Navbar />
-      <main className="pt-16 p-6">
-        <div className="m-6">
+      <main className="flex flex-col items-center pt-16 p-6 m-6">
+        <div className="py-32">
           <h1>
             La value du crash game est :
             <span className={getValueColor()}>{` x${(value / 100).toFixed(
@@ -59,6 +62,36 @@ export default function Home() {
               (value / 100)
             ).toFixed(0)}`}</span>
           </h2>
+        </div>
+        <div className="flex flex-row space-x-96">
+          <div className="border rounded-xl p-4">
+            <p className="text-center">Bets en cours</p>
+            <div className="flex flex-row space-x-4 items-center justify-center">
+              <p>User</p>
+              <div className="flex items-center">
+                <p className="">200</p>
+                <Coin style={{ height: 20, width: 20 }} />
+              </div>
+            </div>
+            <div className="flex flex-row space-x-4 items-center justify-center">
+              <p>User</p>
+              <div className="flex items-center">
+                <p className="">300</p>
+                <Coin style={{ height: 20, width: 20 }} />
+              </div>
+            </div>
+          </div>
+          <div className="border rounded-xl p-4">
+            <p className="text-center">Bets validés</p>
+            <div className="flex flex-row space-x-4 items-center justify-center">
+              <p>User</p>
+              <div className="flex items-center text-[#FFE8A3]">
+                <p className="">600</p>
+                <Coin color="#FFE8A3" style={{ height: 20, width: 20 }} />
+              </div>
+              <p className="text-[#FFE8A3]">x6.00</p>
+            </div>
+          </div>
         </div>
       </main>
     </div>
