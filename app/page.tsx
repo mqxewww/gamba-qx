@@ -9,20 +9,26 @@ import { useEffect, useRef, useState } from "react";
 
 export default function Home() {
   const [value, setValue] = useState(100);
+
   const requestRef = useRef<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
 
   useEffect(() => {
     const animate = (timestamp: number) => {
-      // if (startTimeRef.current === null) startTimeRef.current = timestamp;
+      if (startTimeRef.current === null) {
+        startTimeRef.current = timestamp;
+      }
 
       if (startTimeRef.current) {
         const currentTime = timestamp - startTimeRef.current;
+        const newValue = Math.floor(
+          Math.exp(0.0578 * (currentTime / 1000)) * 100
+        );
 
-        setValue(Math.floor(Math.exp(0.0578 * (currentTime / 1000)) * 100));
-
-        requestRef.current = requestAnimationFrame(animate);
+        setValue(newValue);
       }
+
+      requestRef.current = requestAnimationFrame(animate);
     };
 
     requestRef.current = requestAnimationFrame(animate);
@@ -32,17 +38,31 @@ export default function Home() {
     };
   }, []);
 
+  const getCrashValue = () => {
+    return `x${(value / 100).toFixed(2)}`;
+  };
+
   return (
     <div className="min-h-screen">
       <Navbar />
       <main className="w-full min-h-screen flex pt-16">
-        <div className="w-3/4 flex items-center justify-center m-4">
-          <h1>
-            La value du crash game est :
-            <span className={`text-[${getBetColor(value)}]`}>{` x${(
-              value / 100
-            ).toFixed(2)}`}</span>
-          </h1>
+        <div className="w-3/4 flex flex-col items-center justify-around m-4">
+          <div className="w-full h-96 relative mb-8">
+            <div className="absolute inset-0 z-0">
+              {/** Will add background graph here, need to know how I do it. */}
+            </div>
+
+            <div className="absolute inset-0 z-10 flex items-center justify-center">
+              <p
+                className="text-9xl font-crash-value"
+                style={{ color: getBetColor(value) }}
+              >
+                {getCrashValue()}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-row space-x-8 w-full p-4 rounded-lg"></div>
         </div>
         <div className="w-1/4 m-4 space-y-8">
           <div className="rounded-xl p-4 px-16 bg-[#1B1D23]">

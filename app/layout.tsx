@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Plus_Jakarta_Sans } from "next/font/google";
+import { Plus_Jakarta_Sans, Roboto_Mono } from "next/font/google";
 
 import "./globals.css";
 
@@ -7,6 +7,12 @@ const plusJakartaSansFont = Plus_Jakarta_Sans({
   subsets: ["latin"],
   weight: ["600", "800"],
   variable: "--font-plus-jakarta-sans",
+});
+
+const robotoMono = Roboto_Mono({
+  subsets: ["latin"],
+  weight: ["700"],
+  variable: "--font-roboto-mono",
 });
 
 export const metadata: Metadata = {
@@ -21,7 +27,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${plusJakartaSansFont.variable} antialiased`}>
+      <body
+        className={`${plusJakartaSansFont.variable} ${robotoMono.variable} antialiased`}
+      >
         <div className="font-main">{children}</div>
       </body>
     </html>

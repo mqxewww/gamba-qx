@@ -12,13 +12,12 @@ export default function CGCashedOutBetRow({
   amount,
   cashedOutAt,
 }: Props) {
-  const color = getBetColor(cashedOutAt);
-
   return (
     <div className="w-full flex flex-row">
       <p className="w-1/3 text-left">{user_name}</p>
       <div
-        className={`w-2/3 flex flex-row justify-end space-x-4 text-[${color}]`}
+        className={`w-2/3 flex flex-row justify-end space-x-4`}
+        style={{ color: getBetColor(cashedOutAt) }}
       >
         <div className="flex items-center space-x-1">
           <p>{amount}</p>
