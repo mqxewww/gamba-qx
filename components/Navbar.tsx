@@ -1,9 +1,9 @@
 "use client";
 
+import Coin from "@/components/icons/Coin";
+
 import Link from "next/link";
 import { useState } from "react";
-
-import { Coin } from "@/components/icons/Coin";
 
 export default function Navbar() {
   const [coins] = useState<number>(200);

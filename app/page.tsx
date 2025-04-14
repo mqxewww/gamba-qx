@@ -1,12 +1,13 @@
 "use client";
 
 import Navbar from "@/components/Navbar";
-import { Coin } from "@/components/icons/Coin";
+import CGCashedOutBetRow from "@/domains/crash-games/components/CGCashedOutBetRow";
+import CGPlayerRow from "@/domains/crash-games/components/CGPlayerRow";
+import { getBetColor } from "@/helpers/getBetColor";
 
 import { useEffect, useRef, useState } from "react";
 
 export default function Home() {
-  const bet = 70;
   const [value, setValue] = useState(100);
   const requestRef = useRef<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
@@ -31,65 +32,48 @@ export default function Home() {
     };
   }, []);
 
-  const getValueColor = () => {
-    switch (true) {
-      case value < 200:
-        return "text-[#F59451]";
-      case value < 300:
-        return "text-[#A1E4F9]";
-      case value < 500:
-        return "text-[#DECCFB]";
-      default:
-        return "text-[#FFE8A3]";
-    }
-  };
-
   return (
     <div className="min-h-screen">
       <Navbar />
-      <main className="flex flex-col items-center pt-16 p-6 m-6">
-        <div className="py-32">
+      <main className="w-full min-h-screen flex pt-16">
+        <div className="w-3/4 flex items-center justify-center m-4">
           <h1>
             La value du crash game est :
-            <span className={getValueColor()}>{` x${(value / 100).toFixed(
-              2
-            )}`}</span>
+            <span className={`text-[${getBetColor(value)}]`}>{` x${(
+              value / 100
+            ).toFixed(2)}`}</span>
           </h1>
-          <h2>
-            Retrait en cours :
-            <span className={getValueColor()}>{` ${(
-              bet *
-              (value / 100)
-            ).toFixed(0)}`}</span>
-          </h2>
         </div>
-        <div className="flex flex-row space-x-96">
-          <div className="border rounded-xl p-4">
-            <p className="text-center">Bets en cours</p>
-            <div className="flex flex-row space-x-4 items-center justify-center">
-              <p>User</p>
-              <div className="flex items-center">
-                <p className="">200</p>
-                <Coin style={{ height: 20, width: 20 }} />
-              </div>
-            </div>
-            <div className="flex flex-row space-x-4 items-center justify-center">
-              <p>User</p>
-              <div className="flex items-center">
-                <p className="">300</p>
-                <Coin style={{ height: 20, width: 20 }} />
-              </div>
+        <div className="w-1/4 m-4 space-y-8">
+          <div className="rounded-xl p-4 px-16 bg-[#1B1D23]">
+            <p className="text-center pb-4 text-xl font-extrabold">
+              BETS ENREGISTRÉS / EN COURS
+            </p>
+            <div className="flex flex-col items-center">
+              <CGPlayerRow user_name="User 5" amount={231} />
+              <CGPlayerRow user_name="User 2" amount={170} />
             </div>
           </div>
-          <div className="border rounded-xl p-4">
-            <p className="text-center">Bets validés</p>
-            <div className="flex flex-row space-x-4 items-center justify-center">
-              <p>User</p>
-              <div className="flex items-center text-[#FFE8A3]">
-                <p className="">600</p>
-                <Coin color="#FFE8A3" style={{ height: 20, width: 20 }} />
-              </div>
-              <p className="text-[#FFE8A3]">x6.00</p>
+          <div className="rounded-xl p-4 px-16 bg-[#1B1D23]">
+            <p className="text-center pb-4 text-xl font-extrabold">
+              BETS VALIDÉS
+            </p>
+            <div className="flex flex-col items-center">
+              <CGCashedOutBetRow
+                user_name="User 4"
+                amount={1279}
+                cashedOutAt={531}
+              />
+              <CGCashedOutBetRow
+                user_name="User 1"
+                amount={306}
+                cashedOutAt={218}
+              />
+              <CGCashedOutBetRow
+                user_name="User 3"
+                amount={291}
+                cashedOutAt={120}
+              />
             </div>
           </div>
         </div>

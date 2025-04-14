@@ -1,0 +1,20 @@
+import Coin from "@/components/icons/Coin";
+
+export interface Props {
+  user_name: string;
+  amount: number;
+}
+
+export default function CGPlayerRow({ user_name, amount }: Props) {
+  return (
+    <div className="w-full flex flex-row">
+      <p className="w-1/3 text-left">{user_name}</p>
+      <div className="w-2/3 flex flex-row justify-end space-x-4">
+        <div className="flex items-center space-x-1">
+          <p>{amount}</p>
+          <Coin style={{ height: 20, width: 20 }} />
+        </div>
+      </div>
+    </div>
+  );
+}
