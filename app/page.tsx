@@ -3,44 +3,45 @@
 import Navbar from "@/components/Navbar";
 import CGCashedOutBetRow from "@/domains/crash-games/components/CGCashedOutBetRow";
 import CGPlayerRow from "@/domains/crash-games/components/CGPlayerRow";
-import { getBetColor } from "@/helpers/getBetColor";
+import CGStateDisplay from "@/domains/crash-games/components/CGStateDisplay";
+import { staticCrashGameData } from "@/domains/crash-games/data/static-crash-game.data";
+import { CrashGameBetStateEnum } from "@/domains/crash-games/enums/crash-game-bet-state.enum";
+import { CrashGameBetMinified } from "@/domains/crash-games/types/crash-game-bet-minified.type";
+import { CrashGameMinified } from "@/domains/crash-games/types/crash-game-minified.type";
 
 import { useEffect, useRef, useState } from "react";
 
 export default function Home() {
   const [value, setValue] = useState(100);
 
-  const requestRef = useRef<number | null>(null);
+  const [currentCrashGame] = useState<CrashGameMinified>(
+    staticCrashGameData.currentCrashGame
+  );
+  const [bets] = useState<CrashGameBetMinified[]>(staticCrashGameData.bets);
+
+  const crashValueRef = useRef<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
 
   useEffect(() => {
     const animate = (timestamp: number) => {
-      if (startTimeRef.current === null) {
-        startTimeRef.current = timestamp;
-      }
+      // if (startTimeRef.current === null) startTimeRef.current = timestamp;
 
       if (startTimeRef.current) {
-        const currentTime = timestamp - startTimeRef.current;
-        const newValue = Math.floor(
-          Math.exp(0.0578 * (currentTime / 1000)) * 100
-        );
+        const elapsedTime = timestamp - startTimeRef.current;
 
-        setValue(newValue);
+        setValue(Math.floor(Math.exp(0.0578 * (elapsedTime / 1000)) * 100));
       }
 
-      requestRef.current = requestAnimationFrame(animate);
+      crashValueRef.current = requestAnimationFrame(animate);
     };
 
-    requestRef.current = requestAnimationFrame(animate);
+    crashValueRef.current = requestAnimationFrame(animate);
 
     return () => {
-      if (requestRef.current !== null) cancelAnimationFrame(requestRef.current);
+      if (crashValueRef.current !== null)
+        cancelAnimationFrame(crashValueRef.current);
     };
   }, []);
-
-  const getCrashValue = () => {
-    return `x${(value / 100).toFixed(2)}`;
-  };
 
   return (
     <div className="min-h-screen">
@@ -52,13 +53,12 @@ export default function Home() {
               {/** Will add background graph here, need to know how I do it. */}
             </div>
 
-            <div className="absolute inset-0 z-10 flex items-center justify-center">
-              <p
-                className="text-9xl font-crash-value"
-                style={{ color: getBetColor(value) }}
-              >
-                {getCrashValue()}
-              </p>
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center">
+              <CGStateDisplay
+                remainingTime={200}
+                value={value}
+                state={currentCrashGame.state}
+              />
             </div>
           </div>
 
@@ -70,8 +70,16 @@ export default function Home() {
               BETS ENREGISTRÉS / EN COURS
             </p>
             <div className="flex flex-col items-center">
-              <CGPlayerRow user_name="User 5" amount={231} />
-              <CGPlayerRow user_name="User 2" amount={170} />
+              {bets
+                .filter((bet) => bet.state !== CrashGameBetStateEnum.CASHED_OUT)
+                .map((bet) => (
+                  <CGPlayerRow
+                    key={bet.uuid}
+                    user_name={bet.user_name}
+                    state={bet.state}
+                    amount={bet.amount}
+                  />
+                ))}
             </div>
           </div>
           <div className="rounded-xl p-4 px-16 bg-[#1B1D23]">
@@ -79,21 +87,16 @@ export default function Home() {
               BETS VALIDÉS
             </p>
             <div className="flex flex-col items-center">
-              <CGCashedOutBetRow
-                user_name="User 4"
-                amount={1279}
-                cashedOutAt={531}
-              />
-              <CGCashedOutBetRow
-                user_name="User 1"
-                amount={306}
-                cashedOutAt={218}
-              />
-              <CGCashedOutBetRow
-                user_name="User 3"
-                amount={291}
-                cashedOutAt={120}
-              />
+              {bets
+                .filter((bet) => bet.state === CrashGameBetStateEnum.CASHED_OUT)
+                .map((bet) => (
+                  <CGCashedOutBetRow
+                    key={bet.uuid}
+                    user_name={bet.user_name}
+                    amount={bet.amount}
+                    cashedOutAt={bet.cashedOutAt}
+                  />
+                ))}
             </div>
           </div>
         </div>

@@ -1,11 +1,11 @@
 import { CSSProperties } from "react";
 
-interface IconProps {
+interface Props {
   color?: string;
   style?: CSSProperties;
 }
 
-export default function Coin({ color = "currentColor", style }: IconProps) {
+export default function Coin({ color = "currentColor", style }: Props) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
