@@ -8,19 +8,31 @@ import { staticCrashGameData } from "@/domains/crash-games/data/static-crash-gam
 import { CrashGameBetStateEnum } from "@/domains/crash-games/enums/crash-game-bet-state.enum";
 import { CrashGameBetMinified } from "@/domains/crash-games/types/crash-game-bet-minified.type";
 import { CrashGameMinified } from "@/domains/crash-games/types/crash-game-minified.type";
+import { CurrentCrashGame } from "@/domains/crash-games/types/current-crash-game.type";
+import { useSocket } from "@/lib/socket-context";
+import { useSocketEvent } from "@/lib/use-socket-event";
 
 import { useEffect, useRef, useState } from "react";
 
 export default function Home() {
+  const { crashGamesSocket } = useSocket();
+
   const [value, setValue] = useState(100);
 
-  const [currentCrashGame] = useState<CrashGameMinified>(
+  const [currentCrashGame, setCurrentCrashGame] = useState<CrashGameMinified>(
     staticCrashGameData.currentCrashGame
   );
-  const [bets] = useState<CrashGameBetMinified[]>(staticCrashGameData.bets);
+  const [bets, setBets] = useState<CrashGameBetMinified[]>(
+    staticCrashGameData.bets
+  );
 
   const crashValueRef = useRef<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
+
+  useSocketEvent<CurrentCrashGame>(crashGamesSocket, "cg-data", (data) => {
+    setCurrentCrashGame(data.currentCrashGame);
+    setBets(data.bets);
+  });
 
   useEffect(() => {
     const animate = (timestamp: number) => {

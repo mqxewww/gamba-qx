@@ -1,3 +1,5 @@
+import { SocketProvider } from "@/lib/socket-context";
+
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Roboto_Mono } from "next/font/google";
 
@@ -30,7 +32,9 @@ export default function RootLayout({
       <body
         className={`${plusJakartaSansFont.variable} ${robotoMono.variable} antialiased`}
       >
-        <div className="font-main">{children}</div>
+        <SocketProvider>
+          <div className="font-main">{children}</div>
+        </SocketProvider>
       </body>
     </html>
   );
