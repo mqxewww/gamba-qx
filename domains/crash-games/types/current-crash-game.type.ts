@@ -4,4 +4,5 @@ import { CrashGameMinified } from "@/domains/crash-games/types/crash-game-minifi
 export type CurrentCrashGame = {
   currentCrashGame: CrashGameMinified;
   bets: CrashGameBetMinified[];
+  crashTick?: number;
 };

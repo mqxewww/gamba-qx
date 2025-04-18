@@ -47,7 +47,9 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       }
     );
 
-    crashGamesSocketInstance.on("connect", () => setCrashGamesConnected(true));
+    crashGamesSocketInstance.on("connect", () => {
+      setCrashGamesConnected(true);
+    });
     crashGamesSocketInstance.on("disconnect", () =>
       setCrashGamesConnected(false)
     );

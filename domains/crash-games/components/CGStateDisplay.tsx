@@ -1,16 +1,17 @@
 import { CrashGameStateEnum } from "@/domains/crash-games/enums/crash-game-state.enum";
 import { getBetColor } from "@/helpers/getBetColor";
 
-function PendingComponent({ remainingSeconds }: { remainingSeconds: number }) {
+function PendingComponent({ countdown }: { countdown: number | null }) {
   return (
     <>
-      <p className="text-4xl">Game will start in :</p>
-      <p className="text-7xl">
-        <span className="font-crash-value">
-          {(remainingSeconds / 100).toFixed(2)}
-        </span>
-        s.
-      </p>
+      {countdown && (
+        <>
+          <p className="text-4xl">Game will start in :</p>
+          <p className="text-7xl">
+            <span className="font-crash-value">{countdown.toFixed(2)}</span>s
+          </p>
+        </>
+      )}
     </>
   );
 }
@@ -26,36 +27,42 @@ function ProgressComponent({ value }: { value: number }) {
   );
 }
 
-function FinishedComponent({ value }: { value: number }) {
+function FinishedComponent({ crashTick }: { crashTick?: number }) {
   return (
     <>
-      <p className="text-4xl" style={{ color: "#E73A38" }}>
-        Game crashed at :
-      </p>
-      <p className="text-7xl" style={{ color: "#E73A38" }}>
-        {`x${(value / 100).toFixed(2)}`}
-      </p>
+      {crashTick && (
+        <>
+          <p className="text-4xl" style={{ color: "#E73A38" }}>
+            Game crashed at :
+          </p>
+          <p className="text-7xl" style={{ color: "#E73A38" }}>
+            {`x${(crashTick / 100).toFixed(2)}`}
+          </p>
+        </>
+      )}
     </>
   );
 }
 
 interface CGStateDisplayProps {
-  remainingTime: number;
-  value: number;
   state: CrashGameStateEnum;
+  value: number;
+  countdown: number | null;
+  crashTick?: number;
 }
 
 export default function CGStateDisplay({
-  remainingTime,
+  countdown,
   value,
   state,
+  crashTick,
 }: CGStateDisplayProps) {
   switch (state) {
     case CrashGameStateEnum.PENDING:
-      return <PendingComponent remainingSeconds={remainingTime} />;
+      return <PendingComponent countdown={countdown} />;
     case CrashGameStateEnum.IN_PROGRESS:
       return <ProgressComponent value={value} />;
     case CrashGameStateEnum.FINISHED:
-      return <FinishedComponent value={value} />;
+      return <FinishedComponent crashTick={crashTick} />;
   }
 }
