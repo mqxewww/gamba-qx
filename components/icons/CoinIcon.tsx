@@ -5,7 +5,7 @@ interface Props {
   style?: CSSProperties;
 }
 
-export default function Coin({ color = "currentColor", style }: Props) {
+export default function CoinIcon({ color = "currentColor", style }: Props) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

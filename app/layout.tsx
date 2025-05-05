@@ -1,3 +1,4 @@
+import Navbar from "@/components/Navbar";
 import { SocketProvider } from "@/lib/socket-context";
 
 import type { Metadata } from "next";
@@ -33,7 +34,10 @@ export default function RootLayout({
         className={`${plusJakartaSansFont.variable} ${robotoMono.variable} antialiased`}
       >
         <SocketProvider>
-          <div className="font-main">{children}</div>
+          <div className="min-h-screen font-main">
+            <Navbar />
+            {children}
+          </div>
         </SocketProvider>
       </body>
     </html>

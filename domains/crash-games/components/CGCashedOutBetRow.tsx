@@ -1,4 +1,4 @@
-import Coin from "@/components/icons/Coin";
+import CoinIcon from "@/components/icons/CoinIcon";
 import { getBetColor } from "@/helpers/getBetColor";
 
 export interface Props {
@@ -23,7 +23,7 @@ export default function CGCashedOutBetRow({
           >
             <div className="flex items-center space-x-1">
               <p>{amount}</p>
-              <Coin style={{ height: 20, width: 20 }} />
+              <CoinIcon style={{ height: 20, width: 20 }} />
             </div>
             <p>x{(cashedOutAt / 100).toFixed(2)}</p>
           </div>

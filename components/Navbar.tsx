@@ -1,6 +1,6 @@
 "use client";
 
-import Coin from "@/components/icons/Coin";
+import CoinIcon from "@/components/icons/CoinIcon";
 
 import Link from "next/link";
 import { useState } from "react";
@@ -20,7 +20,7 @@ export default function Navbar() {
         <div className="flex items-center text-[#FFE8A3]">
           <p>{coins}</p>
           <div className="rounded-full h-8 w-8 flex items-center justify-center">
-            <Coin style={{ height: 20, width: 20 }} />
+            <CoinIcon style={{ height: 20, width: 20 }} />
           </div>
         </div>
       </div>

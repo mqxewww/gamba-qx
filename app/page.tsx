@@ -1,15 +1,14 @@
 "use client";
 
-import Navbar from "@/components/Navbar";
 import CGCashedOutBetRow from "@/domains/crash-games/components/CGCashedOutBetRow";
 import CGPlayerRow from "@/domains/crash-games/components/CGPlayerRow";
 import CGStateDisplay from "@/domains/crash-games/components/CGStateDisplay";
-import { staticCrashGameData } from "@/domains/crash-games/data/static-crash-game.data";
-import { CrashGameBetStateEnum } from "@/domains/crash-games/enums/crash-game-bet-state.enum";
+import { defaultCrashGameData } from "@/domains/crash-games/data/default-crash-game.data";
+import { BetStateEnum } from "@/domains/crash-games/enums/bet-state.enum";
 import { CrashGameStateEnum } from "@/domains/crash-games/enums/crash-game-state.enum";
-import { CrashGameBetMinified } from "@/domains/crash-games/types/crash-game-bet-minified.type";
-import { CrashGameMinified } from "@/domains/crash-games/types/crash-game-minified.type";
-import { CurrentCrashGame } from "@/domains/crash-games/types/current-crash-game.type";
+import { Bet } from "@/domains/crash-games/types/bet.type";
+import { CrashGameAndBets } from "@/domains/crash-games/types/crash-game-and-bets.type";
+import { CrashGame } from "@/domains/crash-games/types/crash-game.type";
 import { useSocket } from "@/lib/socket-context";
 import { useSocketEvent } from "@/lib/use-socket-event";
 
@@ -21,28 +20,16 @@ export default function Home() {
   const [countdown, setCountdown] = useState<number | null>(null);
   const [crashValue, setCrashValue] = useState<number>(100);
 
-  const [currentCrashGame, setCurrentCrashGame] =
-    useState<CrashGameMinified | null>(null);
-  const [bets, setBets] = useState<CrashGameBetMinified[]>(
-    staticCrashGameData.bets
-  );
+  const [crashGame, setCrashGame] = useState<CrashGame>(defaultCrashGameData);
+  const [bets, setBets] = useState<Map<string, Bet>>(new Map());
 
   const [lastCrashTick, setLastCrashTick] = useState<number | undefined>();
 
   const animationRef = useRef<number | null>(null);
   const countdownRef = useRef<number | null>(null);
 
-  useSocketEvent<CurrentCrashGame>(crashGamesSocket, "cg:data", (data) => {
-    setCurrentCrashGame(data.currentCrashGame);
-    setBets(data.bets);
-    setLastCrashTick(data.crashTick);
-  });
-
   useEffect(() => {
-    if (
-      !currentCrashGame ||
-      currentCrashGame.state !== CrashGameStateEnum.IN_PROGRESS
-    ) {
+    if (!crashGame || crashGame.state !== CrashGameStateEnum.IN_PROGRESS) {
       if (animationRef.current !== null) {
         cancelAnimationFrame(animationRef.current);
 
@@ -52,8 +39,7 @@ export default function Home() {
       return;
     }
 
-    const startTimestamp =
-      new Date(currentCrashGame.created_at).getTime() + 20000;
+    const startTimestamp = new Date(crashGame.created_at).getTime() + 20000;
 
     const animate = () => {
       const now = Date.now();
@@ -76,13 +62,10 @@ export default function Home() {
         animationRef.current = null;
       }
     };
-  }, [currentCrashGame]);
+  }, [crashGame]);
 
   useEffect(() => {
-    if (
-      !currentCrashGame ||
-      currentCrashGame.state !== CrashGameStateEnum.PENDING
-    ) {
+    if (!crashGame || crashGame.state !== CrashGameStateEnum.PENDING) {
       if (countdownRef.current !== null) {
         cancelAnimationFrame(countdownRef.current);
 
@@ -92,7 +75,7 @@ export default function Home() {
       return;
     }
 
-    const startTimestamp = new Date(currentCrashGame.created_at).getTime();
+    const startTimestamp = new Date(crashGame.created_at).getTime();
     const endTimestamp = startTimestamp + 20_000;
 
     const updateCountdown = () => {
@@ -114,69 +97,110 @@ export default function Home() {
         countdownRef.current = null;
       }
     };
-  }, [currentCrashGame]);
+  }, [crashGame]);
+
+  useSocketEvent<CrashGameAndBets>(
+    crashGamesSocket,
+    "server/game_data",
+    (data) => {
+      setCrashGame(data.crashGame);
+
+      const map: Map<string, Bet> = new Map();
+
+      for (const bet of data.bets) map.set(bet.uuid, bet);
+
+      setBets(map);
+    }
+  );
+
+  useSocketEvent<boolean>(crashGamesSocket, "server/game_started", (data) => {
+    if (!data || crashGame.state !== CrashGameStateEnum.PENDING) return;
+
+    const updatedCrashGame = {
+      ...crashGame,
+      state: CrashGameStateEnum.IN_PROGRESS,
+    };
+
+    setCrashGame(updatedCrashGame);
+  });
+
+  useSocketEvent<number>(crashGamesSocket, "server/game_ended", (data) => {
+    if (crashGame.state !== CrashGameStateEnum.IN_PROGRESS) return;
+
+    const updatedCrashGame = {
+      ...crashGame,
+      state: CrashGameStateEnum.FINISHED,
+    };
+
+    setCrashGame(updatedCrashGame);
+
+    setLastCrashTick(data);
+  });
+
+  useSocketEvent<Bet>(crashGamesSocket, "server/game_bet_update", (data) => {
+    bets.set(data.uuid, data);
+  });
 
   return (
-    <div className="min-h-screen">
-      <Navbar />
-      <main className="w-full min-h-screen flex pt-16">
-        <div className="w-3/4 flex flex-col items-center justify-around mx-16 my-8">
-          <div className="w-full h-96 relative mb-8">
-            <div className="absolute inset-0 z-0 bg-[#1B1D23]">
-              {/** Will add background graph here, need to know how I do it. */}
-            </div>
+    <main className="w-full min-h-screen flex pt-16">
+      <div className="w-3/4 flex flex-col items-center justify-around mx-16 my-8">
+        <div className="w-full h-96 relative mb-8">
+          <div className="absolute inset-0 z-0 bg-[#1B1D23]">
+            {/** Will add background graph here, need to know how I do it. */}
+          </div>
 
-            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center">
-              {currentCrashGame && (
-                <CGStateDisplay
-                  countdown={countdown}
-                  value={crashValue}
-                  state={currentCrashGame.state}
-                  crashTick={lastCrashTick}
+          <div className="absolute inset-0 z-10 flex flex-col items-center justify-center">
+            {crashGame && (
+              <CGStateDisplay
+                countdown={countdown}
+                value={crashValue}
+                state={crashGame.state}
+                crashTick={lastCrashTick}
+              />
+            )}
+          </div>
+        </div>
+
+        <div className="flex flex-row space-x-8 p-4 rounded-lg bg-[#1B1D23]"></div>
+      </div>
+      <div className="w-1/4 mx-16 my-8 space-y-8">
+        <div className="rounded-xl p-4 px-16 bg-[#1B1D23]">
+          <p className="text-center pb-4 text-xl font-extrabold">
+            {crashGame.state === CrashGameStateEnum.PENDING
+              ? "BETS EN ATTENTE"
+              : "BETS EN COURS"}
+          </p>
+          <div className="flex flex-col items-center">
+            {[...bets.values()]
+              .filter((bet) => bet.state !== BetStateEnum.CASHED_OUT)
+              .map((bet) => (
+                <CGPlayerRow
+                  key={bet.uuid}
+                  user_name={bet.user_name}
+                  state={bet.state}
+                  amount={bet.amount}
                 />
-              )}
-            </div>
-          </div>
-
-          <div className="flex flex-row space-x-8 p-4 rounded-lg bg-[#1B1D23]"></div>
-        </div>
-        <div className="w-1/4 mx-16 my-8 space-y-8">
-          <div className="rounded-xl p-4 px-16 bg-[#1B1D23]">
-            <p className="text-center pb-4 text-xl font-extrabold">
-              BETS ENREGISTRÉS / EN COURS
-            </p>
-            <div className="flex flex-col items-center">
-              {bets
-                .filter((bet) => bet.state !== CrashGameBetStateEnum.CASHED_OUT)
-                .map((bet) => (
-                  <CGPlayerRow
-                    key={bet.uuid}
-                    user_name={bet.user_name}
-                    state={bet.state}
-                    amount={bet.amount}
-                  />
-                ))}
-            </div>
-          </div>
-          <div className="rounded-xl p-4 px-16 bg-[#1B1D23]">
-            <p className="text-center pb-4 text-xl font-extrabold">
-              BETS VALIDÉS
-            </p>
-            <div className="flex flex-col items-center">
-              {bets
-                .filter((bet) => bet.state === CrashGameBetStateEnum.CASHED_OUT)
-                .map((bet) => (
-                  <CGCashedOutBetRow
-                    key={bet.uuid}
-                    user_name={bet.user_name}
-                    amount={bet.amount}
-                    cashedOutAt={bet.cashedOutAt}
-                  />
-                ))}
-            </div>
+              ))}
           </div>
         </div>
-      </main>
-    </div>
+        <div className="rounded-xl p-4 px-16 bg-[#1B1D23]">
+          <p className="text-center pb-4 text-xl font-extrabold">
+            BETS VALIDÉS
+          </p>
+          <div className="flex flex-col items-center">
+            {[...bets.values()]
+              .filter((bet) => bet.state === BetStateEnum.CASHED_OUT)
+              .map((bet) => (
+                <CGCashedOutBetRow
+                  key={bet.uuid}
+                  user_name={bet.user_name}
+                  amount={bet.amount}
+                  cashedOutAt={bet.cashedOutAt}
+                />
+              ))}
+          </div>
+        </div>
+      </div>
+    </main>
   );
 }

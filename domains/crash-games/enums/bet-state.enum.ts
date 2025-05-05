@@ -1,4 +1,4 @@
-export enum CrashGameBetStateEnum {
+export enum BetStateEnum {
   NOT_REGISTERED = "NOT_REGISTERED",
   PENDING = "PENDING",
   CASHED_OUT = "CASHED_OUT",
