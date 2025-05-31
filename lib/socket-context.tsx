@@ -1,5 +1,11 @@
 "use client";
 
+import { defaultUsersListData } from "@/domains/users/data/default-users-list.data";
+import { User } from "@/domains/users/types/user.type";
+import { UsersList } from "@/domains/users/types/users-list.type";
+import { useSocketEvent } from "@/lib/use-socket-event";
+import { usePathname, useSearchParams } from "next/navigation";
+
 import {
   createContext,
   ReactNode,
@@ -15,6 +21,9 @@ interface SocketContextType {
 
   usersSocket: Socket | null;
   usersConnected: boolean;
+
+  userData: User | null;
+  usersList: UsersList;
 }
 
 const SocketContext = createContext<SocketContextType>({
@@ -22,6 +31,8 @@ const SocketContext = createContext<SocketContextType>({
   crashGamesConnected: false,
   usersSocket: null,
   usersConnected: false,
+  userData: null,
+  usersList: defaultUsersListData,
 });
 
 export const SocketProvider = ({ children }: { children: ReactNode }) => {
@@ -29,32 +40,65 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
   const [usersSocket, setUsersSocket] = useState<Socket | null>(null);
   const [crashGamesConnected, setCrashGamesConnected] = useState(false);
   const [usersConnected, setUsersConnected] = useState(false);
+  const [userData, setUserData] = useState<User | null>(null);
+  const [usersList, setUsersList] = useState<UsersList>(defaultUsersListData);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
 
   useEffect(() => {
+    const token = searchParams.get("token");
+    const email = searchParams.get("email");
+
+    if (token && email) {
+      localStorage.setItem("token", token);
+      localStorage.setItem("email", email);
+
+      window.history.replaceState({}, "", pathname);
+    }
+
+    setIsInitialized(true);
+  }, [searchParams, pathname]);
+
+  useEffect(() => {
+    if (!isInitialized) return;
+
+    const authOptions = {
+      transports: ["websocket"],
+      autoConnect: true,
+    };
+
     const crashGamesSocketInstance = io(
       `${process.env.NEXT_PUBLIC_SOCKETIO_SERVER_URL}/crash-games`,
-      {
-        transports: ["websocket"],
-        autoConnect: true,
-      }
+      authOptions
     );
 
     const usersSocketInstance = io(
       `${process.env.NEXT_PUBLIC_SOCKETIO_SERVER_URL}/users`,
-      {
-        transports: ["websocket"],
-        autoConnect: true,
-      }
+      authOptions
     );
 
     crashGamesSocketInstance.on("connect", () => {
       setCrashGamesConnected(true);
+
+      crashGamesSocketInstance.emit("client/game_client_connected", {
+        token: localStorage.getItem("token"),
+        email: localStorage.getItem("email"),
+      });
     });
     crashGamesSocketInstance.on("disconnect", () =>
       setCrashGamesConnected(false)
     );
 
-    usersSocketInstance.on("connect", () => setUsersConnected(true));
+    usersSocketInstance.on("connect", () => {
+      setUsersConnected(true);
+
+      usersSocketInstance.emit("client/user_client_connected", {
+        token: localStorage.getItem("token"),
+        email: localStorage.getItem("email"),
+      });
+    });
     usersSocketInstance.on("disconnect", () => setUsersConnected(false));
 
     setCrashGamesSocket(crashGamesSocketInstance);
@@ -65,7 +109,24 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
 
       if (usersSocketInstance) usersSocketInstance.disconnect();
     };
-  }, []);
+  }, [isInitialized]);
+
+  useSocketEvent<User>(usersSocket, "server/user_data", (data) => {
+    console.log({ data });
+    setUserData(data);
+  });
+
+  useSocketEvent<UsersList>(usersSocket, "server/users_list", (data) => {
+    setUsersList(data);
+  });
+
+  useSocketEvent<unknown>(crashGamesSocket, "server/error", (data) => {
+    console.log(`Error from crashGamesSocket 'server/error', ${data}`);
+  });
+
+  useSocketEvent<unknown>(usersSocket, "server/error", (data) => {
+    console.log(`Error from usersSocket 'server/error', ${data}`);
+  });
 
   return (
     <SocketContext.Provider
@@ -74,6 +135,8 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
         usersSocket,
         crashGamesConnected,
         usersConnected,
+        userData,
+        usersList,
       }}
     >
       {children}
