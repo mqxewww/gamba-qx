@@ -17,10 +17,10 @@ import { io, Socket } from "socket.io-client";
 
 interface SocketContextType {
   crashGamesSocket: Socket | null;
-  crashGamesConnected: boolean;
+  crashGamesSocketConnected: boolean;
 
   usersSocket: Socket | null;
-  usersConnected: boolean;
+  usersSocketConnected: boolean;
 
   userData: User | null;
   usersList: UsersList;
@@ -28,9 +28,9 @@ interface SocketContextType {
 
 const SocketContext = createContext<SocketContextType>({
   crashGamesSocket: null,
-  crashGamesConnected: false,
+  crashGamesSocketConnected: false,
   usersSocket: null,
-  usersConnected: false,
+  usersSocketConnected: false,
   userData: null,
   usersList: defaultUsersListData,
 });
@@ -38,8 +38,9 @@ const SocketContext = createContext<SocketContextType>({
 export const SocketProvider = ({ children }: { children: ReactNode }) => {
   const [crashGamesSocket, setCrashGamesSocket] = useState<Socket | null>(null);
   const [usersSocket, setUsersSocket] = useState<Socket | null>(null);
-  const [crashGamesConnected, setCrashGamesConnected] = useState(false);
-  const [usersConnected, setUsersConnected] = useState(false);
+  const [crashGamesSocketConnected, setCrashGamesSocketConnected] =
+    useState(false);
+  const [usersSocketConnected, setUsersSocketConnected] = useState(false);
   const [userData, setUserData] = useState<User | null>(null);
   const [usersList, setUsersList] = useState<UsersList>(defaultUsersListData);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -80,7 +81,7 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
     );
 
     crashGamesSocketInstance.on("connect", () => {
-      setCrashGamesConnected(true);
+      setCrashGamesSocketConnected(true);
 
       crashGamesSocketInstance.emit("client/game_client_connected", {
         token: localStorage.getItem("token"),
@@ -88,18 +89,18 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       });
     });
     crashGamesSocketInstance.on("disconnect", () =>
-      setCrashGamesConnected(false)
+      setCrashGamesSocketConnected(false)
     );
 
     usersSocketInstance.on("connect", () => {
-      setUsersConnected(true);
+      setUsersSocketConnected(true);
 
       usersSocketInstance.emit("client/user_client_connected", {
         token: localStorage.getItem("token"),
         email: localStorage.getItem("email"),
       });
     });
-    usersSocketInstance.on("disconnect", () => setUsersConnected(false));
+    usersSocketInstance.on("disconnect", () => setUsersSocketConnected(false));
 
     setCrashGamesSocket(crashGamesSocketInstance);
     setUsersSocket(usersSocketInstance);
@@ -133,8 +134,8 @@ export const SocketProvider = ({ children }: { children: ReactNode }) => {
       value={{
         crashGamesSocket,
         usersSocket,
-        crashGamesConnected,
-        usersConnected,
+        crashGamesSocketConnected,
+        usersSocketConnected,
         userData,
         usersList,
       }}

@@ -1,9 +1,9 @@
-import { BetStateEnum } from "@/domains/crash-games/enums/bet-state.enum";
+import { BetStatus } from "@/domains/crash-games/enums/bet-status.enum";
 
 export type Bet = {
   uuid: string;
-  user_name: string;
-  state: BetStateEnum;
+  status: BetStatus;
   amount: number;
   cashedOutAt: number | null;
+  username: string;
 };

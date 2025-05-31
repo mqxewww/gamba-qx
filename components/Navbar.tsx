@@ -3,7 +3,7 @@
 import CoinIcon from "@/components/icons/CoinIcon";
 import { useSocket } from "@/lib/socket-context";
 
-export default function Navbar() {
+const Navbar: React.FC = () => {
   const { userData } = useSocket();
 
   return (
@@ -29,4 +29,6 @@ export default function Navbar() {
       </div>
     </nav>
   );
-}
+};
+
+export default Navbar;

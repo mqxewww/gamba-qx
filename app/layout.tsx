@@ -1,22 +1,10 @@
+import { Metadata } from "next";
+
+import { plusJakartaSansFont, robotoMono } from "@/app/fonts";
 import Navbar from "@/components/Navbar";
 import { SocketProvider } from "@/lib/socket-context";
 
-import type { Metadata } from "next";
-import { Plus_Jakarta_Sans, Roboto_Mono } from "next/font/google";
-
 import "./globals.css";
-
-const plusJakartaSansFont = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  weight: ["600", "800"],
-  variable: "--font-plus-jakarta-sans",
-});
-
-const robotoMono = Roboto_Mono({
-  subsets: ["latin"],
-  weight: ["700"],
-  variable: "--font-roboto-mono",
-});
 
 export const metadata: Metadata = {
   title: "Gamba App",

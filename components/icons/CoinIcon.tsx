@@ -5,7 +5,7 @@ interface Props {
   style?: CSSProperties;
 }
 
-export default function CoinIcon({ color = "currentColor", style }: Props) {
+const CoinIcon: React.FC<Props> = ({ color = "currentColor", style }) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -19,4 +19,6 @@ export default function CoinIcon({ color = "currentColor", style }: Props) {
       <path d="M512 544c-227.456 0-416-94.272-416-224S284.544 96 512 96s416 94.272 416 224-188.544 224-416 224zm0-64c196.672 0 352-77.696 352-160S708.672 160 512 160s-352 77.696-352 160 155.328 160 352 160z" />
     </svg>
   );
-}
+};
+
+export default CoinIcon;
