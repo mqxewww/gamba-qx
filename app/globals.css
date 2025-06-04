@@ -16,3 +16,11 @@
   --color-crash-high: oklch(0.875 0.0667 302.49);
   --color-crash-extreme: oklch(0.934 0.0904 91.78);
 }
+
+#headlessui-portal-root {
+  position: relative;
+  z-index: 50;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}

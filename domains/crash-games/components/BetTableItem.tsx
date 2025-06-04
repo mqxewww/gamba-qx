@@ -1,5 +1,4 @@
 import CoinIcon from "@/components/icons/CoinIcon";
-import { BetStatus } from "@/domains/crash-games/enums/bet-status.enum";
 import { Bet } from "@/domains/crash-games/types/bet.type";
 
 interface Props {
@@ -8,11 +7,7 @@ interface Props {
 
 const BetTableItem: React.FC<Props> = ({ bet }) => {
   return (
-    <div
-      className={`w-full flex flex-row ${
-        bet.status === BetStatus.CRASHED ? "text-[#E73A38]" : ""
-      }`}
-    >
+    <div className="w-full flex flex-row">
       <p className="w-1/3 text-left">{bet.username}</p>
       <div className="w-2/3 flex flex-row justify-end space-x-4">
         <div className="flex items-center space-x-1">

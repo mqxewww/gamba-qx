@@ -47,7 +47,12 @@ const Home: React.FC = () => {
   });
 
   useSocketEvent<Bet>(crashGamesSocket, "server/game_bet_update", (data) => {
-    bets.set(data.uuid, data);
+    setBets((prev) => {
+      const bets = new Map(prev);
+      bets.set(data.uuid, data);
+
+      return bets;
+    });
   });
 
   useSocketEvent<number>(crashGamesSocket, "server/game_ended", (data) => {
