@@ -28,7 +28,7 @@ const CrashGameDisplay: React.FC<Props> = ({ crashGame, crashedAt }) => {
 
   return (
     <div className="w-full h-96 relative mb-8">
-      <div className="absolute inset-0 z-0 bg-[#1B1D23]">
+      <div className="absolute inset-0 z-0 bg-background-100">
         {/** Will add background graph here, need to know how I do it. */}
       </div>
 

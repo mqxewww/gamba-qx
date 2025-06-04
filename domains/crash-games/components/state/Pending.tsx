@@ -50,7 +50,7 @@ const Pending: React.FC<Props> = ({ crashGame }) => {
     <>
       <p className="text-4xl">Game will start in :</p>
       <p className="text-7xl">
-        <span className="font-crash-value">{countdown.toFixed(2)}</span>s
+        <span className="font-mono">{countdown.toFixed(2)}</span>s
       </p>
     </>
   );

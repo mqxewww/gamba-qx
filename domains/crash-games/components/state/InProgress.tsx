@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { CrashGameState } from "@/domains/crash-games/enums/crash-game-state.enum";
 import { CrashGame } from "@/domains/crash-games/types/crash-game.type";
-import { getBetColor } from "@/helpers/getBetColor";
+import { getCrashColor } from "@/helpers/getCrashColor";
 
 interface Props {
   crashGame: CrashGame;
@@ -50,8 +50,8 @@ const InProgress: React.FC<Props> = ({ crashGame }) => {
 
   return (
     <p
-      className="text-9xl font-crash-value"
-      style={{ color: getBetColor(crashValue) }}
+      className="text-9xl font-mono transition-colors duration-500"
+      style={{ color: getCrashColor(crashValue) }}
     >
       {`x${(crashValue / 100).toFixed(2)}`}
     </p>

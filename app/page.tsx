@@ -69,7 +69,7 @@ const Home: React.FC = () => {
       <div className="w-3/4 flex flex-col items-center justify-around mx-16 my-8">
         <CrashGameDisplay crashGame={crashGame} crashedAt={crashedAt} />
 
-        <div className="flex flex-row space-x-8 p-4 rounded-lg bg-[#1B1D23]"></div>
+        <div className="flex flex-row space-x-8 p-4 rounded-lg"></div>
       </div>
       <div className="w-1/4 mx-16 my-8 space-y-8">
         <BetTable
