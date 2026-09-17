@@ -1,6 +1,0 @@
-export enum BetStatus {
-  NOT_REGISTERED = "NOT_REGISTERED",
-  PENDING = "PENDING",
-  CASHED_OUT = "CASHED_OUT",
-  CRASHED = "CRASHED"
-}
