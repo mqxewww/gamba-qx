@@ -41,7 +41,8 @@
 | Routing             | **React Router**                                  |
 | Server-state / REST | **TanStack Query**                                |
 | Shared validation   | **Zod** schemas in `packages/shared`              |
-| Styling             | owned by `/design` (legacy used Tailwind v4)      |
+| Styling             | **Tailwind v4** (tokens from the `/design` mockup) |
+| Lint / format       | **ESLint** (typescript-eslint, react-hooks) + **Prettier**, LF line endings (`.gitattributes`) |
 
 ## 3. Monorepo layout
 
@@ -194,11 +195,11 @@ Four tables. UUID primary keys, `created_at` defaults. Enums as Postgres enums
 - **`sessions`**: `id (uuid pk)`, `user_id (fk users)`, `expires_at`,
   `created_at`. The cookie carries the signed session id.
 - **`rounds`**: `id (uuid pk)`, `seed (text)`, `seed_hash (text)`,
-  `crash_multiplier (integer, ×100, nullable until finished)`,
-  `state (enum: pending|in_progress|finished)`, `created_at`,
-  `started_at (nullable)`, `ended_at (nullable)`.
+  `crash_multiplier (integer, ×100, nullable until finished, stays null if
+aborted)`, `state (enum: pending|in_progress|finished|aborted)`, `created_at`,
+  `started_at (nullable)`, `ended_at (nullable, set on finish or abort)`.
 - **`bets`**: `id (uuid pk)`, `user_id (fk)`, `round_id (fk)`,
-  `amount (integer)`, `status (enum: pending|cashed_out|crashed)`,
+  `amount (integer)`, `status (enum: pending|cashed_out|crashed|refunded)`,
   `cashed_out_at (integer ×100, nullable)`, `created_at`.
   Unique constraint on `(user_id, round_id)` → enforces "one bet per round" at
   the DB level.
@@ -213,6 +214,11 @@ coins >= :amount` — zero rows updated ⇒ reject (`NOT_ENOUGH_COINS`). Insert
 - Credit at cashout: flip the bet `pending → cashed_out` with a guarded update
   (`WHERE status = 'pending'`) then `coins = coins + floor(amount·mult/100)`;
   zero rows ⇒ already cashed out.
+- Refund on abort: in one tx, flip the round to `aborted` (guarded
+  `WHERE state IN ('pending','in_progress')`), flip its bets
+  `pending → refunded` (guarded `WHERE status = 'pending'`) and credit
+  `coins = coins + amount` for exactly the rows flipped — a refund can never be
+  applied twice. Cashed-out bets are left untouched.
 
 ## 6. WebSocket protocol
 
@@ -248,6 +254,7 @@ and the server pushes `round:state` immediately on connect.)
 | `round:pending` | new betting window opens      | `{ roundId, seedHash, bettingEndsAt }`                                        |
 | `round:start`   | betting closes, curve begins  | `{ startTime }` (epoch ms; clients animate from here)                         |
 | `round:crash`   | round ends                    | `{ crashMultiplier, seed }` (seed revealed here)                              |
+| `round:aborted` | engine failure mid-round      | `{ roundId }` (pending bets refunded; clients refetch balance + history)      |
 | `bet:new`       | any player bet accepted       | `{ roundId, userName, amount }`                                               |
 | `bet:cashout`   | any player cashout            | `{ roundId, userName, multiplier }`                                           |
 | `presence`      | connect/disconnect/bet change | `{ connected: int, inRound: int }`                                            |
@@ -262,8 +269,10 @@ REST (over HTTP, not WS) handles request/response concerns:
 - `POST /api/auth/logout` → clear session.
 - `GET /api/auth/me` → current user (balance included) or 401.
 - `POST /api/users/faucet` → claim (guarded by threshold).
-- `GET /api/history/rounds` → 10 most recent crashes.
-- `GET /api/history/bets` → 25 most recent bets of the logged-in user.
+- `GET /api/history/rounds` → 10 most recent **finished** crashes (aborted
+  rounds excluded).
+- `GET /api/history/bets` → 25 most recent bets of the logged-in user
+  (refunded bets included).
 
 ## 7. Round lifecycle engine (server-authoritative)
 
@@ -296,6 +305,20 @@ schedule START in BETTING_WINDOW_MS      publish round:start {startTime}      sc
 - **Disconnect during a round**: the bet stays; since cashout is manual, a
   disconnected player's pending bet resolves as `crashed` at END.
 
+**Aborted rounds.** A single `abortRound(roundId)` (refund tx in §5) is used in
+two places:
+
+- **Boot recovery**: before creating its first round, the engine aborts every
+  round still `pending` or `in_progress` in the DB (left over by a restart,
+  crash or kill).
+- **Engine failure**: if a transition (CREATE/START/END) throws, the engine
+  clears its timers, aborts the current round, publishes `round:aborted`, then
+  schedules a fresh CREATE. If the abort itself fails (e.g. DB down), the round
+  stays unresolved in the DB and boot recovery picks it up later.
+
+Graceful shutdown (SIGINT/SIGTERM) is deliberately not handled: boot recovery
+already covers it.
+
 ## 8. Frontend data flow
 
 - **Auth**: `/auth` posts to REST; on success the cookie is set and TanStack
@@ -310,7 +333,12 @@ schedule START in BETTING_WINDOW_MS      publish round:start {startTime}      sc
   `packages/shared` — the same code path as the legacy `InProgress.tsx`, minus
   the hard-coded constants.
 - **History**: `ResultsStrip` and `PersonalHistory` load via TanStack Query REST
-  calls; `ResultsStrip` is also refreshed when a `round:crash` arrives.
+  calls; `ResultsStrip` is also refreshed when a `round:crash` arrives. Aborted
+  rounds never appear in the strip; refunded bets appear in `PersonalHistory`
+  with a disabled/cancelled style. On `round:aborted`, `me` and the personal
+  history are refetched.
+- **Routes**: `/game` is public (spectators watch read-only), `/` redirects to
+  it; `/auth` redirects to `/game` when already logged in.
 - **Errors**: `error` WS messages and REST 4xx map to the shared error codes for
   clear, localized messages.
 
@@ -397,7 +425,8 @@ begins, removing the hidden coupling to the betting window length.
   keeps everything same-origin — without it, auth-over-WS appears broken.
 - **Single-process game state.** The round engine is an in-memory singleton; v1
   runs one server instance (no horizontal scaling — out of scope). A restart
-  mid-round abandons the current round (acceptable for v1).
+  mid-round abandons the current round; it is marked `aborted` and its pending
+  stakes are refunded at the next boot (§7).
 - **Concurrency correctness.** Double-bet / double-cashout / double-faucet all
   rely on guarded conditional updates + the `(user, round)` unique index rather
   than app-level checks alone. This is the one area to test deliberately.

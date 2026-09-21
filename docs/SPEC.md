@@ -119,6 +119,16 @@ the client** (~60 fps) rather than streamed value by value:
 - A client joining mid-round receives the current round's start timestamp and
   state so its local animation is in sync.
 
+**Aborted rounds.** If a round cannot complete normally (server restart or an
+engine failure mid-round), it is **aborted** rather than finished:
+
+- An aborted round is stored as such and stays distinguishable from a round
+  that finished normally.
+- Every bet of that round that was **not yet cashed out is refunded** (its stake
+  is credited back). Bets already cashed out keep their outcome.
+- Aborted rounds are **hidden** from the recent-results strip.
+- A new round starts right after the abort.
+
 ### 5.4 Betting & cashout rules
 
 - A player may place **one bet per round**, only during the **pending** window.
@@ -139,8 +149,9 @@ the client** (~60 fps) rather than streamed value by value:
 - **Global history**: the UI shows a strip of the **10 most recent crash
   multipliers**.
 - **Personal history**: a logged-in player can see their **25 most recent bets**
-  (amount, the round, cashout multiplier or "lost", and net result). Pagination
-  is deferred to a later version.
+  (amount, the round, cashout multiplier, "lost" or "refunded", and net result).
+  Refunded bets (from an aborted round) stay visible but are shown as
+  cancelled/disabled. Pagination is deferred to a later version.
 
 ## 6. Provably-fair mechanism (v1)
 
@@ -215,6 +226,8 @@ v1 is considered a stable deliverable when all of the following hold:
 - The UI shows a **recent-results strip** and the player sees their **personal
   bet history**.
 - A finished round exposes seed + hash so a round can be **verified**.
+- A round interrupted by a restart or an engine failure is **aborted** and its
+  not-yet-cashed-out stakes are **refunded**.
 - The project **builds, lints, type-checks, and runs** from the documented local
   setup, using **Bun only**, with **green CI**.
 
@@ -228,6 +241,8 @@ v1 is considered a stable deliverable when all of the following hold:
   resolves normally (crash = lost, since cashout is manual and requires action).
 - Concurrent bets/cashouts from the same user must not double-spend or
   double-credit coins (balance stays consistent).
+- Server restart or engine failure mid-round → the round is aborted and pending
+  stakes are refunded exactly once (see §5.3).
 - Claiming the faucet when above the threshold → rejected.
 - A client connecting mid-round receives the current round state (phase,
   multiplier, bets).
